@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.rsocket.RSocketRequester;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
+import reactor.core.Disposable;
 
 @Slf4j
 @ShellComponent
@@ -14,8 +15,10 @@ public class RSocketShellClient {
     private static final String CLIENT = "Client";
     private static final String REQUEST = "Request";
     private static final String FIRE_AND_FORGET = "Fire-And-Forget";
-
+    private static final String STREAM = "Stream";
     private final RSocketRequester rsocketRequester;
+
+    private static Disposable disposable;
 
     @Autowired
     public RSocketShellClient(RSocketRequester.Builder rsocketRequesterBuilder) {
@@ -42,5 +45,27 @@ public class RSocketShellClient {
                 .data(new Message(CLIENT, FIRE_AND_FORGET))
                 .send()
                 .block();
+    }
+
+    @ShellMethod("Send one request. Many responses (stream) will be printed.")
+    public void stream() {
+        log.info("\nRequest-Stream. Sending one request. Waiting for unlimited responses (Stop process to quit)...");
+        this.disposable = this.rsocketRequester
+                .route("stream")
+                .data(new Message(CLIENT, STREAM))
+                .retrieveFlux(Message.class)
+                .subscribe(er -> log.info("Response received: {}", er));
+    }
+
+    @ShellMethod("Stop streaming messages from the server.")
+    public void s(){
+        if(null != disposable){
+            try {
+                disposable.dispose();
+            } catch (Throwable e) {
+                //noop
+                log.error(e.getMessage());
+            }
+        }
     }
 }
