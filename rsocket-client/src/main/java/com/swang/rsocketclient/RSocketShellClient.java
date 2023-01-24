@@ -7,6 +7,10 @@ import org.springframework.messaging.rsocket.RSocketRequester;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import reactor.core.Disposable;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import java.time.Duration;
 
 @Slf4j
 @ShellComponent
@@ -55,6 +59,24 @@ public class RSocketShellClient {
                 .data(new Message(CLIENT, STREAM))
                 .retrieveFlux(Message.class)
                 .subscribe(er -> log.info("Response received: {}", er));
+    }
+
+    @ShellMethod("Stream some settings to the server. Stream of responses will be printed.")
+    public void channel() {
+            log.info("\n\n***** Channel (bi-directional streams)\n***** Asking for a stream of messages.\n***** Type 's' to stop.\n\n");
+
+            Mono<Duration> setting1 = Mono.just(Duration.ofSeconds(1));
+            Mono<Duration> setting2 = Mono.just(Duration.ofSeconds(3)).delayElement(Duration.ofSeconds(5));
+            Mono<Duration> setting3 = Mono.just(Duration.ofSeconds(5)).delayElement(Duration.ofSeconds(15));
+
+            Flux<Duration> settings = Flux.concat(setting1, setting2, setting3)
+                    .doOnNext(d -> log.info("\nSending setting for a {}-second interval.\n", d.getSeconds()));
+
+            disposable = this.rsocketRequester
+                    .route("channel")
+                    .data(settings)
+                    .retrieveFlux(Message.class)
+                    .subscribe(message -> log.info("Received: {} \n(Type 's' to stop.)", message));
     }
 
     @ShellMethod("Stop streaming messages from the server.")
