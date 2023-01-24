@@ -1,9 +1,12 @@
 package com.swang.rsocketclient;
 
 import com.swang.rsocketclient.data.Message;
+import io.rsocket.SocketAcceptor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.rsocket.RSocketRequester;
+import org.springframework.messaging.rsocket.RSocketStrategies;
+import org.springframework.messaging.rsocket.annotation.support.RSocketMessageHandler;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import reactor.core.Disposable;
@@ -11,6 +14,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.UUID;
 
 @Slf4j
 @ShellComponent
@@ -25,10 +29,32 @@ public class RSocketShellClient {
     private static Disposable disposable;
 
     @Autowired
+    public RSocketShellClient(RSocketRequester.Builder rsocketRequesterBuilder, RSocketStrategies strategies) {
+
+        String client = UUID.randomUUID().toString();
+        log.info("Connecting using client ID: {}", client);
+
+        SocketAcceptor responder = RSocketMessageHandler.responder(strategies, new ClientHandler());
+
+        this.rsocketRequester = rsocketRequesterBuilder
+                .setupRoute("shell-client")
+                .setupData(client)
+                .rsocketStrategies(strategies)
+                .rsocketConnector(connector -> connector.acceptor(responder))
+                .tcp("localhost", 7001);
+
+//        this.rsocketRequester.rsocket()
+//                .onClose()
+//                .doOnError(error -> log.warn("Connection CLOSED"))
+//                .doFinally(consumer -> log.info("Client DISCONNECTED"))
+//                .subscribe();
+    }
+
+/*    @Autowired
     public RSocketShellClient(RSocketRequester.Builder rsocketRequesterBuilder) {
         this.rsocketRequester = rsocketRequesterBuilder
                 .tcp("localhost", 7001);
-    }
+    }*/
 
     @ShellMethod("Send one request. One response will be printed.")
     public void requestResponse() throws InterruptedException {
