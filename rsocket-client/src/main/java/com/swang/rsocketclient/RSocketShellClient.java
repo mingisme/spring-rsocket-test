@@ -13,6 +13,7 @@ public class RSocketShellClient {
 
     private static final String CLIENT = "Client";
     private static final String REQUEST = "Request";
+    private static final String FIRE_AND_FORGET = "Fire-And-Forget";
 
     private final RSocketRequester rsocketRequester;
 
@@ -31,5 +32,15 @@ public class RSocketShellClient {
                 .retrieveMono(Message.class)
                 .block();
         log.info("\nResponse was: {}", message);
+    }
+
+    @ShellMethod("Send one request. No response will be returned.")
+    public void fireAndForget() throws InterruptedException {
+        log.info("\nFire-And-Forget. Sending one request. Expect no response (check server log)...");
+        this.rsocketRequester
+                .route("fire-and-forget")
+                .data(new Message(CLIENT, FIRE_AND_FORGET))
+                .send()
+                .block();
     }
 }
