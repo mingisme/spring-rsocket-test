@@ -5,8 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Controller
@@ -31,9 +33,9 @@ public class RSocketController {
     @MessageMapping("stream")
     Flux<Message> stream(Message request) {
         log.info("Received stream request: {}", request);
-        return Flux
-                .interval(Duration.ofSeconds(1))
-                .map(index -> new Message(SERVER, STREAM, index))
-                .log();
+        final AtomicLong counter = new AtomicLong(0);
+        return Mono.fromCallable(() ->new Message(SERVER, STREAM, counter.getAndIncrement()))
+                .repeat()
+                .log("requestStream");
     }
 }

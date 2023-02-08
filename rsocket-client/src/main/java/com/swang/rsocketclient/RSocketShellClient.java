@@ -1,6 +1,7 @@
 package com.swang.rsocketclient;
 
 import com.swang.rsocketclient.data.Message;
+import io.rsocket.core.Resume;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.rsocket.RSocketRequester;
@@ -8,6 +9,11 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import reactor.core.Disposable;
 
+import java.time.Duration;
+
+/**
+ * socat -d TCP-LISTEN:7002,fork,reuseaddr TCP:localhost:7001
+ */
 @Slf4j
 @ShellComponent
 public class RSocketShellClient {
@@ -23,7 +29,8 @@ public class RSocketShellClient {
     @Autowired
     public RSocketShellClient(RSocketRequester.Builder rsocketRequesterBuilder) {
         this.rsocketRequester = rsocketRequesterBuilder
-                .tcp("localhost", 7001);
+                .rsocketConnector(connector -> connector.resume(new Resume().sessionDuration(Duration.ofMinutes(20))))
+                .tcp("localhost", 7002);
     }
 
     @ShellMethod("Send one request. One response will be printed.")
@@ -54,6 +61,8 @@ public class RSocketShellClient {
                 .route("stream")
                 .data(new Message(CLIENT, STREAM))
                 .retrieveFlux(Message.class)
+                .limitRate(1)
+                .delayElements(Duration.ofSeconds(1))
                 .subscribe(er -> log.info("Response received: {}", er));
     }
 
