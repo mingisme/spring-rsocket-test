@@ -8,6 +8,8 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import reactor.core.Disposable;
 
+import java.time.Duration;
+
 @Slf4j
 @ShellComponent
 public class RSocketShellClient {
@@ -54,6 +56,8 @@ public class RSocketShellClient {
                 .route("stream")
                 .data(new Message(CLIENT, STREAM))
                 .retrieveFlux(Message.class)
+                .limitRate(3)
+                .delayElements(Duration.ofSeconds(1))
                 .subscribe(er -> log.info("Response received: {}", er));
     }
 
