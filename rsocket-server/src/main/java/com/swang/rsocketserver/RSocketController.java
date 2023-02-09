@@ -57,8 +57,7 @@ public class RSocketController {
     }
 
     @ConnectMapping("shell-client")
-    void connectShellClientAndAskForTelemetry
-            (RSocketRequester requester, @Payload String client) {
+    void connectShellClientAndAskForTelemetry(RSocketRequester requester, @Payload String client) {
         requester.rsocket()
                 .onClose()
                 .doFirst(() -> {

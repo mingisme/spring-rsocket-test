@@ -42,12 +42,6 @@ public class RSocketShellClient {
                 .rsocketStrategies(strategies)
                 .rsocketConnector(connector -> connector.acceptor(responder))
                 .tcp("localhost", 7001);
-
-//        this.rsocketRequester.rsocket()
-//                .onClose()
-//                .doOnError(error -> log.warn("Connection CLOSED"))
-//                .doFinally(consumer -> log.info("Client DISCONNECTED"))
-//                .subscribe();
     }
 
 /*    @Autowired
