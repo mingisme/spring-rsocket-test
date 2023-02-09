@@ -63,14 +63,14 @@ public class RSocketController {
                 .onClose()
                 .doFirst(() -> {
                     log.info("Client: {} CONNECTED.", client);
-                    CLIENTS.add(requester); // (2)
+                    CLIENTS.add(requester);
                 })
                 .doOnError(error -> {
-                    log.warn("Channel to client {} CLOSED", client); // (3)
+                    log.warn("Channel to client {} CLOSED", client);
                 })
                 .doFinally(consumer -> {
                     CLIENTS.remove(requester);
-                    log.info("Client {} DISCONNECTED", client); // (4)
+                    log.info("Client {} DISCONNECTED", client);
                 })
                 .subscribe();
 
